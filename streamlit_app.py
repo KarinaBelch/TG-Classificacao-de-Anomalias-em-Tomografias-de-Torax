@@ -4,8 +4,8 @@ import streamlit as st
 
 # # Titulo da página
 st.set_page_config(page_title='Trabalho de Graduação', page_icon='🥼', layout='wide')
-st.title('dentificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artifical')
-st.info('Trabalho de Graduação referente ao curso de Engenharia Biomédica da Universidade Federal do ABC.')
+st.title('Classificação de Anomalias em TC de Tórax')
+st.info('Trabalho de Graduação referente ao curso de Engenharia Biomédica da Universidade Federal do ABC | Identificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artifical')
 # 
 # Menu Lateral
 st.sidebar.header("Menu")
