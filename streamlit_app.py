@@ -69,21 +69,21 @@ def funcOrdenarFatias(dicom_files):
 modelo = joblib.load('modelo_treinado.pkl')
 
 if uploaded_zip:
-     temp_dir = "temp_upload"
+    temp_dir = "temp_upload"
 
-     # Limpar e criar diretório temporário
-     if os.path.exists(temp_dir):
-         shutil.rmtree(temp_dir)
-     os.makedirs(temp_dir)
+    # Limpar e criar diretório temporário
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    os.makedirs(temp_dir)
 
-     # Salvar arquivo zip
-     zip_path = os.path.join(temp_dir, "uploaded.zip")
-     with open(zip_path, "wb") as f:
-         f.write(uploaded_zip.getbuffer())
+    # Salvar arquivo zip
+    zip_path = os.path.join(temp_dir, "uploaded.zip")
+    with open(zip_path, "wb") as f:
+        f.write(uploaded_zip.getbuffer())
 
-     # Extrair arquivos do zip
-     with zipfile.ZipFile(zip_path, "r") as zip_ref:
-         zip_ref.extractall(temp_dir)
+    # Extrair arquivos do zip
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(temp_dir)
 
     # Chamando a função para obter os arquivos DICOM do arquivo zipado
     dicom_files = funcObterArquivoDicom(temp_dir)
@@ -91,10 +91,9 @@ if uploaded_zip:
     st.write("Arquivos DICOM encontrados:", len(dicom_files))
 
     # Ler e ordenar as fatias
-     slices, volume = funcOrdenarFatias(dicom_files)
+    slices, volume = funcOrdenarFatias(dicom_files)
 
-
-     for i in range(len(slices)):
-        pred = modelo.predict(slices)
-        resultados.append((slices))
+    for i in range(len(slices)):
+      pred = modelo.predict(slices)
+      resultados.append((slices))
 
