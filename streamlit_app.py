@@ -9,7 +9,7 @@ Original file is located at
 
 # @title Importando bibliotecas
 
-import strealit as st
+import streamlit as st
 import joblib
 import numpy as np
 import os
