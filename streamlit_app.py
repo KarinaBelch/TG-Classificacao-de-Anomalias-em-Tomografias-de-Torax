@@ -103,8 +103,13 @@ if uploaded_zip:
     # Ler e ordenar as fatias
     slices, volume = funcOrdenarFatias(dicom_files)
 
+    print(type(slices))
+    print(type(slices[0]))
+    print(slices[0])
+
+
     for i in range(len(slices)):
-      img_array = slices[i]  # pega a fatia
+      img_array = slices[i]['image']  # pega a fatia
       # Pré-processamento exemplo: redimensionar, normalizar etc. (ajuste conforme seu modelo)
       img_array = np.expand_dims(img_array, axis=-1)  # adiciona canal se necessário
       img_array = img_array / 255.0  # normaliza
