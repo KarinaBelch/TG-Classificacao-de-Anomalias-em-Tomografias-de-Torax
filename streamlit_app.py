@@ -120,16 +120,21 @@ if uploaded_zip:
     if 'filtro' not in st.session_state:
         st.session_state.filtro = "Todos"
 
-    flex = st.container(horizontal=True, horizontal_alignment="left")
+    col1, col2 = st.columns(2)
 
-    if flex.button("Todos", key="btn_todos"):
-        st.session_state.filtro = "Todos"
-    elif flex.button("Apenas Câncer", key="btn_cancer"):
-        st.session_state.filtro = "Apenas Câncer"
-    elif flex.button("Apenas Saudável", key="btn_saudavel"):
-        st.session_state.filtro = "Apenas Saudável"
+    with col1:
+      flex = st.container(horizontal=True, horizontal_alignment="left", border=True)
 
-    st.write(f"Filtro ativo: {st.session_state.filtro}")
+      flex.subheader("Filtros")
+
+      if flex.button("Todos", key="btn_todos"):
+          st.session_state.filtro = "Todos"
+      elif flex.button("Apenas Câncer", key="btn_cancer"):
+          st.session_state.filtro = "Apenas Câncer"
+      elif flex.button("Apenas Saudável", key="btn_saudavel"):
+          st.session_state.filtro = "Apenas Saudável"
+
+      flex.write(f"Filtro ativo: {st.session_state.filtro}")
 
 
     # Processando os dados
@@ -160,7 +165,9 @@ if uploaded_zip:
     num_cancer = [r for r in resultados if r['pred_class'] == 'Câncer']
     num_saudavel = [r for r in resultados if r['pred_class'] == 'Saudável']
 
-    st.write(f'Slices detectados com câncer: {len(num_cancer)} | Slices detectados como saudável: {len(num_saudavel)}')
+    with col2:
+      st.write(f'Slices detectados com câncer: {len(num_cancer)}')
+      st.write(f'Slices detectados como saudável: {len(num_saudavel)}')
 
     # Exibir imagens filtradas lado a lado
 
