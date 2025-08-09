@@ -168,7 +168,7 @@ if uploaded_zip:
     with col2:
       flex_dados = st.container(border=True)
 
-      st.write("Arquivos DICOM encontrados:", len(dicom_files))
+      flex_dados.write(f'Arquivos DICOM encontrados: {len(dicom_files)')
       st.write("Slices detectados com câncer:", len(num_cancer))
       st.write("Slices detectados como saudável:", len(num_saudavel))
 
