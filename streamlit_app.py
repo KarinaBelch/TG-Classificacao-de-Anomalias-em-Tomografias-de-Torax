@@ -69,7 +69,7 @@ uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 # Ajuste para o seu modelo
 IMG_SIZE = 128
 MODEL_ID = "1zfggM4S9HxRphPcGN2dCrWWswYr2kEMV"  # coloque aqui o ID do Google Drive
-MODEL_PATH = "lung_cancer_classifier.h5"
+MODEL_PATH = "classifier.h5"
 MODEL_URL = f"https://drive.google.com/uc?id={MODEL_ID}"
 
 # Baixa o modelo se não existir
