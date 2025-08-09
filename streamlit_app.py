@@ -29,7 +29,7 @@ dicom_files = []
 resultados = []
 
 # Ajuste para o modelo
-IMG_SIZE = 128
+IMG_SIZE = 512
 MODEL_ID = "1zfggM4S9HxRphPcGN2dCrWWswYr2kEMV"  # ID do Google Drive
 MODEL_PATH = "classifier.h5"
 MODEL_URL = f"https://drive.google.com/uc?id={MODEL_ID}"
