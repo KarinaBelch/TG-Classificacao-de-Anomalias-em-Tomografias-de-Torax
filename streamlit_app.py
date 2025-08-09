@@ -133,6 +133,6 @@ if uploaded_zip:
         pred_class = "Câncer" if pred > 0.5 else "Saudável"
 
         # Mostrar imagem e resultado
-        st.image(img_resized, caption=f"Imagem: {os.path.basename(dicom_path)}")
+        st.image(img_resized, caption=f"Imagem: {os.path.basename(img_array)}")
         st.write(f"Predição: {pred_class} ({pred_prob:.3f})")
         st.markdown("---")
