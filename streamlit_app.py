@@ -169,8 +169,8 @@ if uploaded_zip:
       flex_dados = st.container(border=True)
 
       flex_dados.write("Arquivos DICOM encontrados:", len(dicom_files))
-      flex_dados.write("Slices detectados com câncer:", len(num_cancer))
-      flex_dados.write("Slices detectados como saudável:", len(num_saudavel))
+      st.write("Slices detectados com câncer:", len(num_cancer))
+      st.write("Slices detectados como saudável:", len(num_saudavel))
 
     # Exibir imagens filtradas lado a lado
 
