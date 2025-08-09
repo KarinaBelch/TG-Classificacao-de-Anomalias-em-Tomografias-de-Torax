@@ -10,9 +10,9 @@ from PIL import Image  # Pillow
 
 # Ajuste para o seu modelo
 IMG_SIZE = 128
-MODEL_ID = "SEU_ID_DO_ARQUIVO"  # coloque aqui o ID do Google Drive
+MODEL_ID = "11oFWS9_ckKVAhSlbjcRglDfU6IyBGcjM"  # coloque aqui o ID do Google Drive
 MODEL_PATH = "lung_cancer_classifier.h5"
-MODEL_URL = f"https://drive.google.com/uc?id=11oFWS9_ckKVAhSlbjcRglDfU6IyBGcjM"
+MODEL_URL = f"https://drive.google.com/uc?id={MODEL_ID}"
 
 # Baixa o modelo se não existir
 if not os.path.exists(MODEL_PATH):
