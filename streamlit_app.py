@@ -127,7 +127,7 @@ if uploaded_zip:
 
       flex_botoes = flex_filtro.container(horizontal=True, horizontal_alignment="left")
 
-      if flex_botoes.button("Todos", key="btn_todos"):
+      if flex_botoes.button("Todos", key="btn_todos", type="primary"):
           st.session_state.filtro = "Todos"
       elif flex_botoes.button("Apenas Câncer", key="btn_cancer"):
           st.session_state.filtro = "Apenas Câncer"
