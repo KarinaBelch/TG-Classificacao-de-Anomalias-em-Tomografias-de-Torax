@@ -114,14 +114,16 @@ if uploaded_zip:
         # Ou, se for array numpy direto:
         # img_array = slices[i]
         
-        # Pré-processa: redimensiona, adiciona canal, normaliza, etc.
-        from PIL import Image
-        
+        # img_array vem do DICOM ou do seu dataset
         img_pil = Image.fromarray(img_array)
-        img_resized = img_pil.resize((IMG_SIZE, IMG_SIZE))
+        img_resized = img_pil.resize((128, 128))
         img_array = np.array(img_resized)
-    
-        # Prediz
+        
+        img_array = np.expand_dims(img_array, axis=-1)  # canal
+        img_array = np.expand_dims(img_array, axis=0)   # batch
+        
+        img_array = img_array.astype('float32') / 255.0
+        
         pred = modelo.predict(img_array)
         
         resultados.append((i, pred))
