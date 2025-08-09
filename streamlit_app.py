@@ -70,6 +70,9 @@ uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 with zipfile.ZipFile("lung_cancer_classifier.zip", "r") as zf:
     zf.extractall()
 
+# Carregando o modelo
+modelo = load_model('lung_cancer_classifier.h5')  # Nome do arquivo dentro do zip
+
 if uploaded_zip:
     temp_dir = "temp_upload"
 
