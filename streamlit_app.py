@@ -123,18 +123,20 @@ if uploaded_zip:
     col1, col2 = st.columns(2)
 
     with col1:
-      flex = st.container(horizontal=True, horizontal_alignment="left", border=True)
+      flex_filtro = st.container(border=True)
 
-      st.subheader("Filtros")
+      flex_filtro.subheader("Filtros")
 
-      if flex.button("Todos", key="btn_todos"):
+      flex_botoes = st.container(horizontal=True, horizontal_alignment="left")
+
+      if flex_botoes.button("Todos", key="btn_todos"):
           st.session_state.filtro = "Todos"
-      elif flex.button("Apenas Câncer", key="btn_cancer"):
+      elif flex_botoes.button("Apenas Câncer", key="btn_cancer"):
           st.session_state.filtro = "Apenas Câncer"
-      elif flex.button("Apenas Saudável", key="btn_saudavel"):
+      elif flex_botoes.button("Apenas Saudável", key="btn_saudavel"):
           st.session_state.filtro = "Apenas Saudável"
 
-      st.write(f"Filtro ativo: {st.session_state.filtro}")
+      flex_filtro.write(f"Filtro ativo: {st.session_state.filtro}")
 
 
     # Processando os dados
