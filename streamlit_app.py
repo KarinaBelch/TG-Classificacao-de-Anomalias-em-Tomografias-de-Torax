@@ -129,9 +129,9 @@ if uploaded_zip:
 
       if flex_botoes.button("Todos", key="btn_todos", type="primary"):
           st.session_state.filtro = "Todos"
-      elif flex_botoes.button("Apenas Câncer", key="btn_cancer"):
+      elif flex_botoes.button("Apenas Câncer", key="btn_cancer", type="primary"):
           st.session_state.filtro = "Apenas Câncer"
-      elif flex_botoes.button("Apenas Saudável", key="btn_saudavel"):
+      elif flex_botoes.button("Apenas Saudável", key="btn_saudavel", type="primary"):
           st.session_state.filtro = "Apenas Saudável"
 
       flex_filtro.write(f"Filtro ativo: {st.session_state.filtro}")
