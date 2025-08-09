@@ -17,6 +17,7 @@ import zipfile
 import gdown
 import pydicom
 import shutil
+import cv2
 
 # @title Parâmetros
 
@@ -107,14 +108,23 @@ if uploaded_zip:
     print(type(slices[0]))
     print(slices[0])
 
+    for i, dicom_path in enumerate(dicom_files):
+        ds = pydicom.dcmread(dicom_path)
+        img = ds.pixel_array.astype(np.float32)
 
-    for i in range(len(slices)):
-      img_array = slices[i]['image']  # pega a fatia
-      # Pré-processamento exemplo: redimensionar, normalizar etc. (ajuste conforme seu modelo)
-      img_array = np.expand_dims(img_array, axis=-1)  # adiciona canal se necessário
-      img_array = img_array / 255.0  # normaliza
-      img_array = np.expand_dims(img_array, axis=0)  # adiciona batch dimension
+        # Redimensiona para o tamanho esperado pelo modelo
+        img_resized = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
 
-      pred = modelo.predict(img_array)
-      resultados.append((i, pred))
-      print(f"Slice {i} - Predição: {pred}")
+        # Normaliza e adiciona canal e batch dimension
+        img_norm = img_resized / 255.0
+        img_norm = np.expand_dims(img_norm, axis=-1)  # canal
+        img_norm = np.expand_dims(img_norm, axis=0)   # batch
+
+        # Predição
+        pred_prob = modelo.predict(img_norm)[0][0]
+        pred_class = 1 if pred_prob > 0.5 else 0
+
+        resultados.append((os.path.basename(dicom_path), pred_class, float(pred_prob)))
+        st.write(f"Arquivo: {os.path.basename(dicom_path)} - Classe: {pred_class} - Probabilidade: {pred_prob:.3f}")
+
+    st.success("Predições finalizadas!")
