@@ -110,7 +110,19 @@ if uploaded_zip:
     slices, volume = funcOrdenarFatias(dicom_files)
 
     for i in range(len(slices)):
-      img_array = np.expand_dims(img_array, axis=0)  # shape (1, altura, largura, canais)
-      pred = modelo.predict(img_array)
-      resultados.append((slices))
-      print(slices)
+        img_array = slices[i].pixel_array  # Se slices[i] for objeto DICOM
+        # Ou, se for array numpy direto:
+        # img_array = slices[i]
+        
+        # Pré-processa: redimensiona, adiciona canal, normaliza, etc.
+        import cv2
+        img_array = cv2.resize(img_array, (IMG_SIZE, IMG_SIZE))
+        img_array = np.expand_dims(img_array, axis=-1)  # adiciona canal se necessário
+        img_array = img_array / 255.0  # normaliza
+        img_array = np.expand_dims(img_array, axis=0)  # adiciona batch dimension
+    
+        # Prediz
+        pred = modelo.predict(img_array)
+        
+        resultados.append((i, pred))
+        print(f"Slice {i} - Predição: {pred}")
