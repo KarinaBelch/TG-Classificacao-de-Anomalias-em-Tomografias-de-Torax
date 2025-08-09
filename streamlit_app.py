@@ -71,7 +71,7 @@ uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 model_path = "lung_cancer_classifier.h5"
 
 if not os.path.exists(model_path):
-    url = "https://drive.google.com/file/d/11oFWS9_ckKVAhSlbjcRglDfU6IyBGcjM/view?usp=drive_link"
+    url = "https://drive.google.com/file/d/11oFWS9_ckKVAhSlbjcRglDfU6IyBGcjM/view?usp=sharing"
     gdown.download(url, model_path, quiet=False)
 
 # Carregando o modelo
