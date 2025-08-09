@@ -79,7 +79,7 @@ if not os.path.exists(MODEL_PATH):
         gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
 
 # Carrega o modelo treinado
-modelo = load_model('lung_cancer_classifier.h5')
+modelo = load_model('classifier.h5')
 
 if uploaded_zip:
     temp_dir = "temp_upload"
