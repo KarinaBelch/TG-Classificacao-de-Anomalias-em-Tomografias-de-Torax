@@ -10,7 +10,6 @@ Original file is located at
 # @title Importando bibliotecas
 
 import streamlit as st
-from tensorflow.keras.models import load_model
 import numpy as np
 import os
 import pydicom
@@ -18,6 +17,8 @@ import gdown
 import zipfile
 import zipfile
 import shutil
+from tensorflow.keras.models import load_model
+from PIL import Image
 
 # @title Parâmetros
 
