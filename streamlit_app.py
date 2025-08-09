@@ -120,16 +120,18 @@ if uploaded_zip:
     if 'filtro' not in st.session_state:
         st.session_state.filtro = "Todos"
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("Todos"):
-            st.session_state.filtro = "Todos"
-    with col2:
-        if st.button("Apenas Câncer"):
-            st.session_state.filtro = "Apenas Câncer"
-    with col3:
-        if st.button("Apenas Saudável"):
-            st.session_state.filtro = "Apenas Saudável"
+    flex = st.container(horizontal=True, horizontal_alignment="left")
+
+    flex.button(f"Todos")
+    flex.button(f"Apenas Câncer")
+    flex.button(f"Apenas Saudável")
+
+    if st.button("Todos"):
+        st.session_state.filtro = "Todos"
+    if st.button("Apenas Câncer"):
+        st.session_state.filtro = "Apenas Câncer"
+    if st.button("Apenas Saudável"):
+        st.session_state.filtro = "Apenas Saudável"
 
     st.write(f"Filtro ativo: {st.session_state.filtro}")
 
