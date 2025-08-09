@@ -110,22 +110,6 @@ if uploaded_zip:
     if 'filtro' not in st.session_state:
         st.session_state.filtro = "Todos"
 
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        if st.button("Todos"):
-            st.session_state.filtro = "Todos"
-
-    with col2:
-        if st.button("Apenas Câncer"):
-            st.session_state.filtro = "Apenas Câncer"
-
-    with col3:
-        if st.button("Apenas Saudável"):
-            st.session_state.filtro = "Apenas Saudável"
-
-    st.write(f"Filtro selecionado: {st.session_state.filtro}")
-
     # Chamando a função para obter os arquivos DICOM do arquivo zipado
     dicom_files = funcObterArquivoDicom(temp_dir)
 
@@ -156,6 +140,23 @@ if uploaded_zip:
             "pred_prob": pred_prob,
             "filename": os.path.basename(dicom_path)
         })
+
+    # Passo 2: botões para filtrar
+    if 'filtro' not in st.session_state:
+        st.session_state.filtro = "Todos"
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Todos"):
+            st.session_state.filtro = "Todos"
+    with col2:
+        if st.button("Apenas Câncer"):
+            st.session_state.filtro = "Apenas Câncer"
+    with col3:
+        if st.button("Apenas Saudável"):
+            st.session_state.filtro = "Apenas Saudável"
+
+    st.write(f"Filtro ativo: {st.session_state.filtro}")
 
     # Exibir imagens filtradas lado a lado
 
