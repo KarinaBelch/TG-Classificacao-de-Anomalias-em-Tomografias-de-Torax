@@ -68,7 +68,7 @@ uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 # @title Processamento dos arquivos DICOM
 
 
-model_path = "lung_cancer_classifier.h5"
+model_path = "modelo_treinado.h5"
 
 if not os.path.exists(model_path):
     url = "https://drive.google.com/uc?id=11oFWS9_ckKVAhSlbjcRglDfU6IyBGcjM"
