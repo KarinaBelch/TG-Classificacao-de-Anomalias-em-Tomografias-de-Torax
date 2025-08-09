@@ -16,6 +16,7 @@ import os
 import zipfile
 import gdown
 import pydicom
+import shutil
 
 # @title Parâmetros
 
