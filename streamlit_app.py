@@ -106,6 +106,13 @@ if uploaded_zip:
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(temp_dir)
 
+    # Opção de filtro
+    filtro = st.radio(
+        "Filtrar predições:",
+        ("Todos", "Apenas Câncer", "Apenas Saudável")
+    )
+
+
     # Chamando a função para obter os arquivos DICOM do arquivo zipado
     dicom_files = funcObterArquivoDicom(temp_dir)
 
@@ -132,6 +139,12 @@ if uploaded_zip:
             pred = modelo.predict(img_array)
             pred_prob = float(pred[0][0])
             pred_class = "Câncer" if pred_prob > 0.5 else "Saudável"
+
+            # Aplica filtro antes de exibir
+            if filtro == "Apenas Câncer" and pred_class != "Câncer":
+                continue
+            if filtro == "Apenas Saudável" and pred_class != "Saudável":
+                continue
 
             with cols[j]:
                 st.image(img_to_show, caption=f"Imagem: {os.path.basename(dicom_path)}")
