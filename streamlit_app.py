@@ -15,6 +15,9 @@ import numpy as np
 import os
 import pydicom
 import gdown
+import zipfile
+import zipfile
+import shutil
 
 # @title Parâmetros
 
