@@ -11,7 +11,7 @@ from PIL import Image  # Pillow
 # Ajuste para o seu modelo
 IMG_SIZE = 128
 MODEL_ID = "SEU_ID_DO_ARQUIVO"  # coloque aqui o ID do Google Drive
-MODEL_PATH = "modelo_treinado.h5"
+MODEL_PATH = "lung_cancer_classifier.h5"
 MODEL_URL = f"https://drive.google.com/uc?id=11oFWS9_ckKVAhSlbjcRglDfU6IyBGcjM"
 
 # Baixa o modelo se não existir
