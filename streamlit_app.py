@@ -10,7 +10,7 @@ Original file is located at
 # @title Importando bibliotecas
 
 import streamlit as st
-import joblib
+from tensorflow.keras.models import load_model
 import numpy as np
 import os
 
@@ -21,20 +21,6 @@ dicom_files = []
 
 # Resultados armazenados em lista
 resultados = []
-
-# @title Layout
-
-# # Titulo da página
-st.set_page_config(page_title='Trabalho de Graduação', page_icon='🥼', layout='wide')
-st.title('Classificação de Anomalias em TC de Tórax')
-st.info('Trabalho de Graduação referente ao curso de Engenharia Biomédica da Universidade Federal do ABC | Identificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artifical')
-#
-# Menu Lateral
-st.sidebar.header("Menu")
-st.sidebar.caption("Leitura de arquivos DICOM.")
-#
-# # Upload do arquivo
-uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 
 # @title Funções
 
@@ -63,10 +49,24 @@ def funcOrdenarFatias(dicom_files):
 
   return slices, volume
 
+# @title Layout
+
+# # Titulo da página
+st.set_page_config(page_title='Trabalho de Graduação', page_icon='🥼', layout='wide')
+st.title('Classificação de Anomalias em TC de Tórax')
+st.info('Trabalho de Graduação referente ao curso de Engenharia Biomédica da Universidade Federal do ABC | Identificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artifical')
+#
+# Menu Lateral
+st.sidebar.header("Menu")
+st.sidebar.caption("Leitura de arquivos DICOM.")
+#
+# # Upload do arquivo
+uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
+
 # @title Processamento dos arquivos DICOM
 
 # Carrega o modelo treinado
-modelo = joblib.load('modelo_treinado.pkl')
+modelo = load_model('modelo_treinado.h5')
 
 if uploaded_zip:
     temp_dir = "temp_upload"
@@ -94,6 +94,7 @@ if uploaded_zip:
     slices, volume = funcOrdenarFatias(dicom_files)
 
     for i in range(len(slices)):
-      pred = modelo.predict(slices)
+      img_array = np.expand_dims(img_array, axis=0)  # shape (1, altura, largura, canais)
+      pred = modelo.predict(img_array)
       resultados.append((slices))
-
+      print(slices)
