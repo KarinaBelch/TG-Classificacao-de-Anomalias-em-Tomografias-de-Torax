@@ -55,7 +55,7 @@ def funcOrdenarFatias(dicom_files):
 
 # @title Layout
 
-# # Titulo da página
+# Titulo da página
 st.set_page_config(page_title='Trabalho de Graduação', page_icon='🥼', layout='wide')
 st.title('Classificação de Anomalias em TC de Tórax')
 st.info('Trabalho de Graduação referente ao curso de Engenharia Biomédica da Universidade Federal do ABC | Identificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artifical')
@@ -68,7 +68,6 @@ st.sidebar.caption("Leitura de arquivos DICOM.")
 uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 
 # @title Processamento dos arquivos DICOM
-
 
 model_path = "modelo_treinado.h5"
 
@@ -105,7 +104,12 @@ if uploaded_zip:
     slices, volume = funcOrdenarFatias(dicom_files)
 
     for i in range(len(slices)):
-      img_array = np.expand_dims(img_array, axis=0)  # shape (1, altura, largura, canais)
+      img_array = slices[i]  # pega a fatia
+      # Pré-processamento exemplo: redimensionar, normalizar etc. (ajuste conforme seu modelo)
+      img_array = np.expand_dims(img_array, axis=-1)  # adiciona canal se necessário
+      img_array = img_array / 255.0  # normaliza
+      img_array = np.expand_dims(img_array, axis=0)  # adiciona batch dimension
+
       pred = modelo.predict(img_array)
-      resultados.append((slices))
-      print(slices)
+      resultados.append((i, pred))
+      print(f"Slice {i} - Predição: {pred}")
