@@ -13,6 +13,7 @@ import streamlit as st
 from tensorflow.keras.models import load_model
 import numpy as np
 import os
+import zipfile
 
 # @title Parâmetros
 
@@ -65,8 +66,9 @@ uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 
 # @title Processamento dos arquivos DICOM
 
-# Carrega o modelo treinado
-modelo = load_model('modelo_treinado.h5')
+
+with zipfile.ZipFile("lung_cancer_classifier.zip", "r") as zf:
+    zf.extractall()
 
 if uploaded_zip:
     temp_dir = "temp_upload"
