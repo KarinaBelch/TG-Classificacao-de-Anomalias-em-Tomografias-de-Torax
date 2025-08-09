@@ -8,3 +8,4 @@ tensorflow
 matplotlib
 pillow
 gdown
+cv2
