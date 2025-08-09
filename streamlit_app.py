@@ -129,3 +129,10 @@ if uploaded_zip:
         
         resultados.append((i, pred))
         print(f"Slice {i} - Predição: {pred}")
+        
+        pred_class = "Doente" if pred_prob > 0.5 else "Saudável"
+
+        # Mostrar imagem e resultado
+        st.image(img_resized, caption=f"Imagem: {os.path.basename(dicom_path)}")
+        st.write(f"Predição: {pred_class} ({pred_prob:.3f})")
+        st.markdown("---")
