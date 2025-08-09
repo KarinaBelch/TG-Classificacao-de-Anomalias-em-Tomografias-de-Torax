@@ -4,3 +4,6 @@ scikit-learn
 numpy
 pandas
 pydicom
+tensorflow
+matplotlib
+pillow
