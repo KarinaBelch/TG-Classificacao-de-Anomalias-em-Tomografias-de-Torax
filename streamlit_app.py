@@ -28,6 +28,15 @@ dicom_files = []
 # Resultados armazenados em lista
 resultados = []
 
+# Ajuste para o modelo
+IMG_SIZE = 128
+MODEL_ID = "1zfggM4S9HxRphPcGN2dCrWWswYr2kEMV"  # ID do Google Drive
+MODEL_PATH = "classifier.h5"
+MODEL_URL = f"https://drive.google.com/uc?id={MODEL_ID}"
+
+# Layout das colunas
+NUM_COLS = 3
+
 # @title Funções
 
 # Função para obter os arquivos DICOM que estão no arquivo zipado enviado pelo usuário
@@ -37,7 +46,7 @@ def funcObterArquivoDicom(dicom_dir):
           if file.endswith(".dcm"):
               dicom_files.append(os.path.join(root, file))
 
-  print("Arquivos DICOM encontrados:", len(dicom_files))
+  st.write("Arquivos DICOM encontrados:", len(dicom_files))
 
   return dicom_files
 
@@ -51,7 +60,7 @@ def funcOrdenarFatias(dicom_files):
   # Converter para volume 3D
   volume = np.stack([s.pixel_array for s in slices])
 
-  print("Volume 3D:", volume.shape)  # (profundidade, altura, largura)
+  st.write("Volume 3D:", volume.shape)  # (profundidade, altura, largura)
 
   return slices, volume
 
@@ -60,7 +69,7 @@ def funcOrdenarFatias(dicom_files):
 # # Titulo da página
 st.set_page_config(page_title='Trabalho de Graduação', page_icon='🥼', layout='wide')
 st.title('Classificação de Anomalias em TC de Tórax')
-st.info('Trabalho de Graduação referente ao curso de Engenharia Biomédica da Universidade Federal do ABC | Identificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artifical')
+st.info('Identificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artifical | Trabalho de Graduação referente ao curso de Engenharia Biomédica da Universidade Federal do ABC')
 #
 # Menu Lateral
 st.sidebar.header("Menu")
@@ -71,11 +80,6 @@ uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 
 # @title Processamento dos arquivos DICOM
 
-# Ajuste para o seu modelo
-IMG_SIZE = 128
-MODEL_ID = "1zfggM4S9HxRphPcGN2dCrWWswYr2kEMV"  # coloque aqui o ID do Google Drive
-MODEL_PATH = "classifier.h5"
-MODEL_URL = f"https://drive.google.com/uc?id={MODEL_ID}"
 
 # Baixa o modelo se não existir
 if not os.path.exists(MODEL_PATH):
@@ -105,33 +109,30 @@ if uploaded_zip:
     # Chamando a função para obter os arquivos DICOM do arquivo zipado
     dicom_files = funcObterArquivoDicom(temp_dir)
 
-    st.write("Arquivos DICOM encontrados:", len(dicom_files))
-
     # Ler e ordenar as fatias
     slices, volume = funcOrdenarFatias(dicom_files)
 
-    for i, dicom_path in enumerate(dicom_files):
-        ds = pydicom.dcmread(dicom_path)
-        img = ds.pixel_array.astype(np.float32)
+    for i in range(0, len(dicom_files), NUM_COLS):
+        cols = st.columns(NUM_COLS)
+        batch = dicom_files[i:i+NUM_COLS]
 
-        # Redimensiona e converte imagem
-        img_pil = Image.fromarray(img)
-        img_resized = img_pil.resize((IMG_SIZE, IMG_SIZE))
-        img_to_show = img_resized.convert("L")  # Modo grayscale 8-bit
+        for j, dicom_path in enumerate(batch):
+            ds = pydicom.dcmread(dicom_path)
+            img = ds.pixel_array.astype(np.float32)
 
-        # Prepara imagem para predição
-        img_array = np.array(img_resized)
-        img_array = np.expand_dims(img_array, axis=-1)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
+            img_pil = Image.fromarray(img)
+            img_resized = img_pil.resize((IMG_SIZE, IMG_SIZE))
+            img_to_show = img_resized.convert("L")
 
-        # Faz predição
-        pred = modelo.predict(img_array)
-        pred_prob = float(pred[0][0])
-        pred_class = "Câncer" if pred_prob > 0.5 else "Saudável"
+            img_array = np.array(img_resized)
+            img_array = np.expand_dims(img_array, axis=-1)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array = img_array / 255.0
 
-        # Exibe imagem e resultado
-        st.image(img_to_show, caption=f"Imagem: {os.path.basename(dicom_path)}")
-        st.write(f"Predição: {pred_class} ({pred_prob:.3f})")
-        st.markdown("---")
+            pred = modelo.predict(img_array)
+            pred_prob = float(pred[0][0])
+            pred_class = "Câncer" if pred_prob > 0.5 else "Saudável"
 
+            with cols[j]:
+                st.image(img_to_show, caption=f"Imagem: {os.path.basename(dicom_path)}")
+                st.write(f"Predição: {pred_class} ({pred_prob:.3f})")
