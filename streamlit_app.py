@@ -110,27 +110,28 @@ if uploaded_zip:
     # Ler e ordenar as fatias
     slices, volume = funcOrdenarFatias(dicom_files)
 
-    for i in range(len(slices)):
-        ds = slices[i]  # objeto DICOM
-        img_array = ds.pixel_array
-    
-        img_pil = Image.fromarray(img_array)
-        img_resized = img_pil.resize((128, 128))
+    for i, dicom_path in enumerate(dicom_files):
+        ds = pydicom.dcmread(dicom_path)
+        img = ds.pixel_array.astype(np.float32)
+
+        # Redimensiona e converte imagem
+        img_pil = Image.fromarray(img)
+        img_resized = img_pil.resize((IMG_SIZE, IMG_SIZE))
+        img_to_show = img_resized.convert("L")  # Modo grayscale 8-bit
+
+        # Prepara imagem para predição
         img_array = np.array(img_resized)
-    
-        img_array = np.expand_dims(img_array, axis=-1)  # canal
-        img_array = np.expand_dims(img_array, axis=0)   # batch
-    
-        img_array = img_array.astype('float32') / 255.0
-    
+        img_array = np.expand_dims(img_array, axis=-1)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array = img_array / 255.0
+
+        # Faz predição
         pred = modelo.predict(img_array)
         pred_prob = float(pred[0][0])
-    
-        resultados.append((i, pred_prob))
-    
         pred_class = "Câncer" if pred_prob > 0.5 else "Saudável"
-    
-        st.image(img_resized, caption=f"Imagem: Slice {i}")
+
+        # Exibe imagem e resultado
+        st.image(img_to_show, caption=f"Imagem: {os.path.basename(dicom_path)}")
         st.write(f"Predição: {pred_class} ({pred_prob:.3f})")
         st.markdown("---")
 
