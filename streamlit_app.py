@@ -110,29 +110,27 @@ if uploaded_zip:
     # Ler e ordenar as fatias
     slices, volume = funcOrdenarFatias(dicom_files)
 
-    for i in range(len(slices)):
-        img_array = slices[i].pixel_array  # Se slices[i] for objeto DICOM
-        # Ou, se for array numpy direto:
-        # img_array = slices[i]
-        
-        # img_array vem do DICOM ou do seu dataset
-        img_pil = Image.fromarray(img_array)
-        img_resized = img_pil.resize((128, 128))
-        img_array = np.array(img_resized)
-        
-        img_array = np.expand_dims(img_array, axis=-1)  # canal
-        img_array = np.expand_dims(img_array, axis=0)   # batch
-        
-        img_array = img_array.astype('float32') / 255.0
-        
-        pred = modelo.predict(img_array)
-        
-        resultados.append((i, pred))
-        print(f"Slice {i} - Predição: {pred}")
-        
-        pred_class = "Câncer" if pred > 0.5 else "Saudável"
+for i in range(len(slices)):
+    ds = slices[i]  # objeto DICOM
+    img_array = ds.pixel_array
 
-        # Mostrar imagem e resultado
-        st.image(img_resized, caption=f"Imagem: {os.path.basename(img_array)}")
-        st.write(f"Predição: {pred_class} ({pred_prob:.3f})")
-        st.markdown("---")
+    img_pil = Image.fromarray(img_array)
+    img_resized = img_pil.resize((128, 128))
+    img_array = np.array(img_resized)
+
+    img_array = np.expand_dims(img_array, axis=-1)  # canal
+    img_array = np.expand_dims(img_array, axis=0)   # batch
+
+    img_array = img_array.astype('float32') / 255.0
+
+    pred = modelo.predict(img_array)
+    pred_prob = float(pred[0][0])
+
+    resultados.append((i, pred_prob))
+
+    pred_class = "Câncer" if pred_prob > 0.5 else "Saudável"
+
+    st.image(img_resized, caption=f"Imagem: Slice {i}")
+    st.write(f"Predição: {pred_class} ({pred_prob:.3f})")
+    st.markdown("---")
+
