@@ -60,7 +60,7 @@ def funcOrdenarFatias(dicom_files):
   # Converter para volume 3D
   volume = np.stack([s.pixel_array for s in slices])
 
-  st.write("Volume 3D:", volume.shape)  # (profundidade, altura, largura)
+  # st.write("Volume 3D:", volume.shape)  # (profundidade, altura, largura)
 
   return slices, volume
 
@@ -140,6 +140,11 @@ if uploaded_zip:
             "pred_prob": pred_prob,
             "filename": os.path.basename(dicom_path)
         })
+
+    num_cancer = len([r for r in resultados if r['pred_class'] == 'Câncer'])
+    num_saudavel = len([r for r in resultados if r['pred_class'] == 'Saudável'])
+
+    st.write(f'Slices detectados com câncer: {num_cancer} | Slices detectados como saudável: {num_saudavel}')
 
     # Passo 2: botões para filtrar
     if 'filtro' not in st.session_state:
