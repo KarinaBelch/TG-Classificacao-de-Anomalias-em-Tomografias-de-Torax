@@ -46,8 +46,6 @@ def funcObterArquivoDicom(dicom_dir):
           if file.endswith(".dcm"):
               dicom_files.append(os.path.join(root, file))
 
-  st.write("Arquivos DICOM encontrados:", len(dicom_files))
-
   return dicom_files
 
 # Função para ordenar as fatias do arquivo DICOM
@@ -168,8 +166,11 @@ if uploaded_zip:
     num_saudavel = [r for r in resultados if r['pred_class'] == 'Saudável']
 
     with col2:
-      st.write(f'Slices detectados com câncer: {len(num_cancer)}')
-      st.write(f'Slices detectados como saudável: {len(num_saudavel)}')
+      flex_dados = st.container(border=True)
+
+      flex_dados.write("Arquivos DICOM encontrados:", len(dicom_files))
+      flex_dados.write("Slices detectados com câncer:", len(num_cancer))
+      flex_dados.write("Slices detectados como saudável:", len(num_saudavel))
 
     # Exibir imagens filtradas lado a lado
 
