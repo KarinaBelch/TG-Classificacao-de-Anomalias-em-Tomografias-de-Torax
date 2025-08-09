@@ -106,12 +106,25 @@ if uploaded_zip:
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(temp_dir)
 
-    # Opção de filtro
-    filtro = st.radio(
-        "Filtrar predições:",
-        ("Todos", "Apenas Câncer", "Apenas Saudável")
-    )
+    # Filtros
+    if 'filtro' not in st.session_state:
+        st.session_state.filtro = "Todos"
 
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button("Todos"):
+            st.session_state.filtro = "Todos"
+
+    with col2:
+        if st.button("Apenas Câncer"):
+            st.session_state.filtro = "Apenas Câncer"
+
+    with col3:
+        if st.button("Apenas Saudável"):
+            st.session_state.filtro = "Apenas Saudável"
+
+    st.write(f"Filtro selecionado: {st.session_state.filtro}")
 
     # Chamando a função para obter os arquivos DICOM do arquivo zipado
     dicom_files = funcObterArquivoDicom(temp_dir)
@@ -119,33 +132,46 @@ if uploaded_zip:
     # Ler e ordenar as fatias
     slices, volume = funcOrdenarFatias(dicom_files)
 
-    for i in range(0, len(dicom_files), NUM_COLS):
-        cols = st.columns(NUM_COLS)
-        batch = dicom_files[i:i+NUM_COLS]
+    # Processando os dados
+    for dicom_path in dicom_files:
+        ds = pydicom.dcmread(dicom_path)
+        img = ds.pixel_array.astype(np.float32)
 
-        for j, dicom_path in enumerate(batch):
-            ds = pydicom.dcmread(dicom_path)
-            img = ds.pixel_array.astype(np.float32)
+        img_pil = Image.fromarray(img)
+        img_resized = img_pil.resize((IMG_SIZE, IMG_SIZE))
+        img_to_show = img_resized.convert("L")
 
-            img_pil = Image.fromarray(img)
-            img_resized = img_pil.resize((IMG_SIZE, IMG_SIZE))
-            img_to_show = img_resized.convert("L")
+        img_array = np.array(img_resized)
+        img_array = np.expand_dims(img_array, axis=-1)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array = img_array / 255.0
 
-            img_array = np.array(img_resized)
-            img_array = np.expand_dims(img_array, axis=-1)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = img_array / 255.0
+        pred = modelo.predict(img_array)
+        pred_prob = float(pred[0][0])
+        pred_class = "Câncer" if pred_prob > 0.5 else "Saudável"
 
-            pred = modelo.predict(img_array)
-            pred_prob = float(pred[0][0])
-            pred_class = "Câncer" if pred_prob > 0.5 else "Saudável"
+        resultados.append({
+            "img": img_to_show,
+            "pred_class": pred_class,
+            "pred_prob": pred_prob,
+            "filename": os.path.basename(dicom_path)
+        })
 
-            # Aplica filtro antes de exibir
-            if filtro == "Apenas Câncer" and pred_class != "Câncer":
-                continue
-            if filtro == "Apenas Saudável" and pred_class != "Saudável":
-                continue
+    # Exibir imagens filtradas lado a lado
 
+    filtrado = []
+    if st.session_state.filtro == "Todos":
+        filtrado = resultados
+    elif st.session_state.filtro == "Apenas Câncer":
+        filtrado = [r for r in resultados if r["pred_class"] == "Câncer"]
+    else:
+        filtrado = [r for r in resultados if r["pred_class"] == "Saudável"]
+
+    for i in range(0, len(filtrado), NUM_COLS):
+        cols = st.columns(min(NUM_COLS, len(filtrado) - i))
+        batch = filtrado[i:i+NUM_COLS]
+
+        for j, item in enumerate(batch):
             with cols[j]:
-                st.image(img_to_show, caption=f"Imagem: {os.path.basename(dicom_path)}")
-                st.write(f"Predição: {pred_class} ({pred_prob:.3f})")
+                st.image(item["img"], caption=f"{item['filename']}")
+                st.write(f"Predição: {item['pred_class']} ({item['pred_prob']:.3f})")
