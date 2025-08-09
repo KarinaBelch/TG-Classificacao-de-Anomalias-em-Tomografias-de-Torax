@@ -121,9 +121,9 @@ if uploaded_zip:
     col1, col2 = st.columns(2)
 
     with col1:
-      flex_filtro = st.container(border=True, gap="small", height=175)
+      flex_filtro = st.container(border=True, gap="small", height=200)
 
-      flex_filtro.markdown(":violet[Filtro]")
+      flex_filtro.subheader("Filtro", divider=True)
 
       flex_botoes = flex_filtro.container(horizontal=True, horizontal_alignment="left")
 
@@ -166,9 +166,9 @@ if uploaded_zip:
     num_saudavel = [r for r in resultados if r['pred_class'] == 'Saudável']
 
     with col2:
-      flex_dados = st.container(border=True, gap="small", height=175)
+      flex_dados = st.container(border=True, gap="small", height=200)
         
-      flex_dados.markdown("*:violet[Dados]*")
+      flex_dados.subheader("Dados", divider=True)
       flex_dados.write(f"Arquivos DICOM encontrados: {len(dicom_files)}")
       flex_dados.write(f"Slices detectados com câncer: {len(num_cancer)}")
       flex_dados.write(f"Slices detectados como saudável: {len(num_saudavel)}")
