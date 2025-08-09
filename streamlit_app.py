@@ -122,18 +122,15 @@ if uploaded_zip:
 
     flex = st.container(horizontal=True, horizontal_alignment="left")
 
-    flex.button(f"Todos")
-    flex.button(f"Apenas Câncer")
-    flex.button(f"Apenas Saudável")
-
-    if st.button("Todos"):
+    if flex.button("Todos", key="btn_todos"):
         st.session_state.filtro = "Todos"
-    if st.button("Apenas Câncer"):
+    elif flex.button("Apenas Câncer", key="btn_cancer"):
         st.session_state.filtro = "Apenas Câncer"
-    if st.button("Apenas Saudável"):
+    elif flex.button("Apenas Saudável", key="btn_saudavel"):
         st.session_state.filtro = "Apenas Saudável"
 
     st.write(f"Filtro ativo: {st.session_state.filtro}")
+
 
     # Processando os dados
     for dicom_path in dicom_files:
