@@ -125,7 +125,7 @@ if uploaded_zip:
     with col1:
       flex = st.container(horizontal=True, horizontal_alignment="left", border=True)
 
-      flex.subheader("Filtros")
+      st.subheader("Filtros")
 
       if flex.button("Todos", key="btn_todos"):
           st.session_state.filtro = "Todos"
@@ -134,7 +134,7 @@ if uploaded_zip:
       elif flex.button("Apenas Saudável", key="btn_saudavel"):
           st.session_state.filtro = "Apenas Saudável"
 
-      flex.write(f"Filtro ativo: {st.session_state.filtro}")
+      st.write(f"Filtro ativo: {st.session_state.filtro}")
 
 
     # Processando os dados
