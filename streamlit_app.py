@@ -127,12 +127,12 @@ if uploaded_zip:
 
       flex_botoes = flex_filtro.container(horizontal=True, horizontal_alignment="left")
 
-      if flex_botoes.button("Todos", key="btn_todos"):
-          st.session_state.filtro = "Todos"
-      elif flex_botoes.button("Apenas Câncer", key="btn_cancer"):
-          st.session_state.filtro = "Apenas Câncer"
-      elif flex_botoes.button("Apenas Saudável", key="btn_saudavel"):
-          st.session_state.filtro = "Apenas Saudável"
+    if flex_botoes.button("Todos", key="btn_todos"):
+        st.session_state.filtro = "Todos"
+    if flex_botoes.button("Apenas Câncer", key="btn_cancer"):
+        st.session_state.filtro = "Apenas Câncer"
+    if flex_botoes.button("Apenas Saudável", key="btn_saudavel"):
+        st.session_state.filtro = "Apenas Saudável"
 
       flex_filtro.write(f"Filtro ativo: {st.session_state.filtro}")
 
