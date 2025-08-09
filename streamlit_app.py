@@ -115,11 +115,11 @@ if uploaded_zip:
         # img_array = slices[i]
         
         # Pré-processa: redimensiona, adiciona canal, normaliza, etc.
-        import cv2
-        img_array = cv2.resize(img_array, (IMG_SIZE, IMG_SIZE))
-        img_array = np.expand_dims(img_array, axis=-1)  # adiciona canal se necessário
-        img_array = img_array / 255.0  # normaliza
-        img_array = np.expand_dims(img_array, axis=0)  # adiciona batch dimension
+        from PIL import Image
+        
+        img_pil = Image.fromarray(img_array)
+        img_resized = img_pil.resize((IMG_SIZE, IMG_SIZE))
+        img_array = np.array(img_resized)
     
         # Prediz
         pred = modelo.predict(img_array)
