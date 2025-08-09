@@ -121,7 +121,7 @@ if uploaded_zip:
     col1, col2 = st.columns(2)
 
     with col1:
-      flex_filtro = st.container(border=True, gap="medium", height=175)
+      flex_filtro = st.container(border=True, gap="small", height=175)
 
       flex_filtro.subheader("Filtro")
 
@@ -166,7 +166,7 @@ if uploaded_zip:
     num_saudavel = [r for r in resultados if r['pred_class'] == 'Saudável']
 
     with col2:
-      flex_dados = st.container(border=True, gap="medium", height=175)
+      flex_dados = st.container(border=True, gap="small", height=175)
         
       flex_dados.write("Dados")
       flex_dados.write(f"Arquivos DICOM encontrados: {len(dicom_files)}")
