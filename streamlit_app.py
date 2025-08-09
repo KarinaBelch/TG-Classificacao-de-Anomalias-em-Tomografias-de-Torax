@@ -123,7 +123,7 @@ if uploaded_zip:
     with col1:
       flex_filtro = st.container(border=True)
 
-      flex_filtro.subheader("Filtros")
+      flex_filtro.subheader("Filtro")
 
       flex_botoes = flex_filtro.container(horizontal=True, horizontal_alignment="left")
 
@@ -167,7 +167,8 @@ if uploaded_zip:
 
     with col2:
       flex_dados = st.container(border=True)
-
+        
+      flex_dados.subheader("Dados")
       flex_dados.write(f"Arquivos DICOM encontrados: {len(dicom_files)}")
       flex_dados.write(f"Slices detectados com câncer: {len(num_cancer)}")
       flex_dados.write(f"Slices detectados como saudável: {len(num_saudavel)}")
