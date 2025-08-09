@@ -9,7 +9,7 @@ from tensorflow.keras.models import load_model
 from PIL import Image  # Pillow
 
 # Ajuste para o seu modelo
-IMG_SIZE = 144
+IMG_SIZE = 128
 MODEL_ID = "SEU_ID_DO_ARQUIVO"  # coloque aqui o ID do Google Drive
 MODEL_PATH = "modelo_treinado.h5"
 MODEL_URL = f"https://drive.google.com/uc?id={MODEL_ID}"
