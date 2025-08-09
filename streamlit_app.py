@@ -116,6 +116,23 @@ if uploaded_zip:
     # Ler e ordenar as fatias
     slices, volume = funcOrdenarFatias(dicom_files)
 
+    # Passo 2: botões para filtrar
+    if 'filtro' not in st.session_state:
+        st.session_state.filtro = "Todos"
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Todos"):
+            st.session_state.filtro = "Todos"
+    with col2:
+        if st.button("Apenas Câncer"):
+            st.session_state.filtro = "Apenas Câncer"
+    with col3:
+        if st.button("Apenas Saudável"):
+            st.session_state.filtro = "Apenas Saudável"
+
+    st.write(f"Filtro ativo: {st.session_state.filtro}")
+
     # Processando os dados
     for dicom_path in dicom_files:
         ds = pydicom.dcmread(dicom_path)
@@ -141,27 +158,10 @@ if uploaded_zip:
             "filename": os.path.basename(dicom_path)
         })
 
-    num_cancer = len([r for r in resultados if r['pred_class'] == 'Câncer'])
-    num_saudavel = len([r for r in resultados if r['pred_class'] == 'Saudável'])
+    num_cancer = [r for r in resultados if r['pred_class'] == 'Câncer']
+    num_saudavel = [r for r in resultados if r['pred_class'] == 'Saudável']
 
-    st.write(f'Slices detectados com câncer: {num_cancer} | Slices detectados como saudável: {num_saudavel}')
-
-    # Passo 2: botões para filtrar
-    if 'filtro' not in st.session_state:
-        st.session_state.filtro = "Todos"
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("Todos"):
-            st.session_state.filtro = "Todos"
-    with col2:
-        if st.button("Apenas Câncer"):
-            st.session_state.filtro = "Apenas Câncer"
-    with col3:
-        if st.button("Apenas Saudável"):
-            st.session_state.filtro = "Apenas Saudável"
-
-    st.write(f"Filtro ativo: {st.session_state.filtro}")
+    st.write(f'Slices detectados com câncer: {len(num_cancer)} | Slices detectados como saudável: {len(num_saudavel)}')
 
     # Exibir imagens filtradas lado a lado
 
@@ -169,9 +169,9 @@ if uploaded_zip:
     if st.session_state.filtro == "Todos":
         filtrado = resultados
     elif st.session_state.filtro == "Apenas Câncer":
-        filtrado = [r for r in resultados if r["pred_class"] == "Câncer"]
+        filtrado = num_cancer
     else:
-        filtrado = [r for r in resultados if r["pred_class"] == "Saudável"]
+        filtrado = num_saudavel
 
     for i in range(0, len(filtrado), NUM_COLS):
         cols = st.columns(min(NUM_COLS, len(filtrado) - i))
