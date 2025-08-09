@@ -183,6 +183,8 @@ if uploaded_zip:
     else:
         filtrado = num_saudavel
 
+    st.subheader("Resultados")
+
     for i in range(0, len(filtrado), NUM_COLS):
         cols = st.columns(min(NUM_COLS, len(filtrado) - i))
         batch = filtrado[i:i+NUM_COLS]
