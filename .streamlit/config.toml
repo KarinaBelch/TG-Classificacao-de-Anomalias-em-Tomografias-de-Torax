@@ -1,11 +1,7 @@
 [theme]
-base="light"
-primaryColor="slateBlue"
-backgroundColor="mintCream"
-secondaryBackgroundColor="darkSeaGreen"
-baseRadius="full"
+base="dark"
+borderColor="mediumSlateBlue"
+showWidgetBorder=false
 
 [theme.sidebar]
-backgroundColor="aliceBlue"
-secondaryBackgroundColor="skyBlue"
-baseRadius="none"
+showWidgetBorder=true
