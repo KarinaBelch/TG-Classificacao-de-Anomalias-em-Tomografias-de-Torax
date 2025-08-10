@@ -1,6 +1,3 @@
 [theme]
-primaryColor = "#7e57c2"              # Roxo médio
-backgroundColor = "#1e1e2f"           # Fundo escuro (azul arroxeado)
-secondaryBackgroundColor = "#3c3b5e"  # Fundo secundário (roxo mais escuro)
-textColor = "#e0e0ff"                 # Texto clarinho
-font = "sans serif"
+base = "dark"
+primaryColor = "purple"
