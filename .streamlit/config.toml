@@ -1,6 +1,11 @@
 [theme]
-base="dark"
-primaryColor="forestGreen"
+base="light"
+primaryColor="slateBlue"
+backgroundColor="mintCream"
+secondaryBackgroundColor="darkSeaGreen"
+baseRadius="full"
 
 [theme.sidebar]
-primaryColor="darkGoldrod"
+backgroundColor="aliceBlue"
+secondaryBackgroundColor="skyBlue"
+baseRadius="none"
