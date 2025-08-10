@@ -1,7 +1,7 @@
 [theme]
 base = "dark"
-primaryColor = "#9c27b0"              # Roxo vibrante para destaques
-backgroundColor = "#121212"           # Fundo escuro principal
-secondaryBackgroundColor = "#1a1a1a"  # Quase preto, neutro para divisores/painéis
-textColor = "#e1bee7"                 # Texto lilás claro
+primaryColor = "#9c27b0"              # Roxo vibrante (botões, highlights)
+backgroundColor = "#121212"           # Fundo preto escuro
+secondaryBackgroundColor = "#2a1a47"  # Roxo escuro quase preto para divider/painéis
+textColor = "#ffffff"                 # Texto branco puro
 font = "sans serif"
