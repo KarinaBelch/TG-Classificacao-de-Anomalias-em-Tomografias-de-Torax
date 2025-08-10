@@ -1,7 +1,2 @@
 [theme]
 base = "dark"
-primaryColor = "#9c27b0"              # Roxo vibrante para destaques
-backgroundColor = "#121212"           # Fundo preto escuro
-secondaryBackgroundColor = "#1c1436"  # Roxo bem escuro, quase preto, discreto
-textColor = "#ffffff"                 # Letras brancas
-font = "sans serif"
