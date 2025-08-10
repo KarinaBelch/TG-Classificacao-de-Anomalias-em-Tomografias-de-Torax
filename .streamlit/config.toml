@@ -1,11 +1,7 @@
 [theme]
-base="dark"
-primaryColor="slateBlue"
-backgroundColor="mintCream"
-secondaryBackgroundColor="darkSeaGreen"
-baseRadius="full"
-
-[theme.sidebar]
-backgroundColor="aliceBlue"
-secondaryBackgroundColor="skyBlue"
-baseRadius="none"
+base = "dark"
+primaryColor = "#9c27b0"              # Roxo vibrante para botões e destaques
+backgroundColor = "#121212"           # Fundo escuro padrão
+secondaryBackgroundColor = "#311b92"  # Roxo bem escuro para divisores e painéis
+textColor = "#e1bee7"                 # Texto claro lilás
+font = "sans serif"
