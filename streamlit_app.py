@@ -1,5 +1,6 @@
-# @title Importando bibliotecas
-
+# ==========================
+# Importando bibliotecas
+# ==========================
 import streamlit as st
 import numpy as np
 import os
@@ -8,22 +9,22 @@ import gdown
 import zipfile
 import shutil
 import tensorflow as tf
-#from tensorflow.keras.models import load_model
 from PIL import Image
-import matplotlib.pyplot as plt
-import io
-
-import cv2  # já vamos usar opencv-python-headless no requirements
+import cv2
 from skimage import measure
 from skimage.segmentation import clear_border
 from scipy.ndimage import binary_fill_holes
+import matplotlib.pyplot as plt
+import io
 
-# @title Parâmetros
+# ==========================
+# Parâmetros
+# ==========================
 dicom_files = []
 resultados = []
 
 IMG_SIZE = 128
-MODEL_ID = "1zfggM4S9HxRphPcGN2dCrWWswYr2kEMV"  # ID do Google Drive
+MODEL_ID = ""  # ID do Google Drive
 MODEL_PATH = "classifier.h5"
 MODEL_URL = f"https://drive.google.com/uc?id={MODEL_ID}"
 NUM_COLS = 3
@@ -31,7 +32,6 @@ NUM_COLS = 3
 # ==========================
 # Funções auxiliares
 # ==========================
-
 def funcObterArquivoDicom(dicom_dir):
     dicom_files = []
     for root, dirs, files in os.walk(dicom_dir):
@@ -90,38 +90,33 @@ def preprocess_image_from_ds(ds):
 
     return image_resized
 
-
+# ==========================
+# Predição com máscara verde
+# ==========================
 def predict_single_dicom(dicom_path, model):
-    """
-    Lê o DICOM, pré-processa, realiza predição e gera uma imagem
-    final com a segmentação verde sobreposta.
-    """
     ds = pydicom.dcmread(dicom_path)
-    img_preprocessed = preprocess_image_from_ds(ds)  # imagem normalizada [0,1]
+    img_preprocessed = preprocess_image_from_ds(ds)
     img_array = np.expand_dims(img_preprocessed, axis=(0, -1))
-    
+
     # Predição
     prob = model.predict(img_array, verbose=0)[0][0]
     pred_class = "Câncer" if prob > 0.5 else "Saudável"
-    
+
     # Máscara segmentada
     lung_mask = segment_lung_mask(ds.pixel_array.astype(np.int16))
-    
-    # Redimensiona a máscara para o tamanho da imagem processada
     lung_mask_resized = cv2.resize(lung_mask.astype(np.uint8), (IMG_SIZE, IMG_SIZE))
-    
-    # Criar figura com matplotlib
+
+    # Criar figura matplotlib
     fig, ax = plt.subplots(figsize=(5,5))
     ax.imshow(img_preprocessed, cmap='gray')
-    ax.imshow(lung_mask_resized, cmap='Greens', alpha=0.4)  # verde semitransparente
+    ax.imshow(lung_mask_resized, cmap='Greens', alpha=0.4)
     ax.axis('off')
-    
-    # Salvar figura em memória para Streamlit
+
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
     buf.seek(0)
     plt.close(fig)
-    
+
     return prob, pred_class, buf
 
 # ==========================
@@ -133,11 +128,10 @@ st.info('Identificação e localização de anomalias causadas por câncer de pu
 
 st.sidebar.header("Menu")
 st.sidebar.caption("Leitura de arquivos DICOM.")
-
 uploaded_zip = st.file_uploader(label='Upload seu arquivo .zip com DICOMs', type="zip")
 
 # ==========================
-# Carrega modelo treinado
+# Carregar modelo
 # ==========================
 if not os.path.exists(MODEL_PATH):
     with st.spinner("Baixando o modelo..."):
@@ -146,11 +140,10 @@ if not os.path.exists(MODEL_PATH):
 modelo = tf.keras.models.load_model(MODEL_PATH)
 
 # ==========================
-# Processamento do ZIP
+# Processamento ZIP
 # ==========================
 if uploaded_zip:
     temp_dir = "temp_upload"
-
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
     os.makedirs(temp_dir)
@@ -165,10 +158,30 @@ if uploaded_zip:
     dicom_files = funcObterArquivoDicom(temp_dir)
     slices, volume = funcOrdenarFatias(dicom_files)
 
-    if 'filtro' not in st.session_state:
-        st.session_state.filtro = "Todos"
+    # ==========================
+    # Predição e exibição
+    # ==========================
+    resultados = []
+    for dicom_path in dicom_files:
+        try:
+            prob, pred_class, img_buf = predict_single_dicom(dicom_path, modelo)
+            resultados.append({
+                "img": img_buf,
+                "pred_class": pred_class,
+                "pred_prob": prob,
+                "filename": os.path.basename(dicom_path)
+            })
+        except Exception as e:
+            st.error(f"Erro ao processar {os.path.basename(dicom_path)}: {e}")
+
+    num_cancer = [r for r in resultados if r['pred_class'] == 'Câncer']
+    num_saudavel = [r for r in resultados if r['pred_class'] == 'Saudável']
 
     col1, col2 = st.columns(2)
+
+    # Filtro lateral
+    if 'filtro' not in st.session_state:
+        st.session_state.filtro = "Todos"
 
     with col1:
         st.subheader("Filtro")
@@ -180,44 +193,27 @@ if uploaded_zip:
             st.session_state.filtro = "Apenas Saudável"
         st.write(f"Filtro ativo: {st.session_state.filtro}")
 
-        resultados = []
-        for dicom_path in dicom_files:
-            try:
-                # agora retorna a imagem com máscara verde sobreposta
-                prob, pred_class, img_buf = predict_single_dicom(dicom_path, modelo)
-                resultados.append({
-                    "img": img_buf,  # BytesIO da imagem final
-                    "pred_class": pred_class,
-                    "pred_prob": prob,
-                    "filename": os.path.basename(dicom_path)
-                })
-            except Exception as e:
-                st.error(f"Erro ao processar {os.path.basename(dicom_path)}: {e}")
+    with col2:
+        st.subheader("Dados")
+        st.write(f"Arquivos DICOM encontrados: {len(dicom_files)}")
+        st.write(f"Slices detectados com câncer: {len(num_cancer)}")
+        st.write(f"Slices detectados como saudável: {len(num_saudavel)}")
 
-        num_cancer = [r for r in resultados if r['pred_class'] == 'Câncer']
-        num_saudavel = [r for r in resultados if r['pred_class'] == 'Saudável']
+    # Aplicar filtro
+    if st.session_state.filtro == "Todos":
+        filtrado = resultados
+    elif st.session_state.filtro == "Apenas Câncer":
+        filtrado = num_cancer
+    else:
+        filtrado = num_saudavel
 
-        with col2:
-            st.subheader("Dados")
-            st.write(f"Arquivos DICOM encontrados: {len(dicom_files)}")
-            st.write(f"Slices detectados com câncer: {len(num_cancer)}")
-            st.write(f"Slices detectados como saudável: {len(num_saudavel)}")
+    # Exibição em colunas
+    st.subheader("Resultados")
+    for i in range(0, len(filtrado), NUM_COLS):
+        cols = st.columns(min(NUM_COLS, len(filtrado) - i))
+        batch = filtrado[i:i+NUM_COLS]
 
-        # Filtro
-        if st.session_state.filtro == "Todos":
-            filtrado = resultados
-        elif st.session_state.filtro == "Apenas Câncer":
-            filtrado = num_cancer
-        else:
-            filtrado = num_saudavel
-
-        # Exibição em colunas
-        st.subheader("Resultados")
-        for i in range(0, len(filtrado), NUM_COLS):
-            cols = st.columns(min(NUM_COLS, len(filtrado) - i))
-            batch = filtrado[i:i+NUM_COLS]
-
-            for j, item in enumerate(batch):
-                with cols[j]:
-                    st.image(item["img"], caption=f"{item['filename']}")
-                    st.write(f"Predição: {item['pred_class']} ({item['pred_prob']:.3f})")
+        for j, item in enumerate(batch):
+            with cols[j]:
+                st.image(item["img"], caption=f"{item['filename']}")
+                st.write(f"Predição: {item['pred_class']} ({item['pred_prob']:.3f})")
