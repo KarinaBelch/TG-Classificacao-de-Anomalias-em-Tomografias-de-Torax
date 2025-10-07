@@ -20,6 +20,12 @@ import tensorflow as tf
 #from tensorflow.keras.models import load_model
 from PIL import Image
 
+import cv2
+from skimage import measure
+from skimage.segmentation import clear_border
+from scipy.ndimage import binary_fill_holes
+
+
 # @title Parâmetros
 
 # Listar arquivos .dcm
@@ -37,145 +43,191 @@ MODEL_URL = f"https://drive.google.com/uc?id={MODEL_ID}"
 # Layout das colunas
 NUM_COLS = 3
 
-# @title Funções
 
-# Função para obter os arquivos DICOM que estão no arquivo zipado enviado pelo usuário
+
+# ==========================
+# Funções auxiliares
+# ==========================
+
 def funcObterArquivoDicom(dicom_dir):
-  for root, dirs, files in os.walk(dicom_dir):
-      for file in files:
-          if file.endswith(".dcm"):
-              dicom_files.append(os.path.join(root, file))
+    dicom_files = []
+    for root, dirs, files in os.walk(dicom_dir):
+        for file in files:
+            if file.endswith(".dcm"):
+                dicom_files.append(os.path.join(root, file))
+    return dicom_files
 
-  return dicom_files
 
-# Função para ordenar as fatias do arquivo DICOM
 def funcOrdenarFatias(dicom_files):
-  # Ordenar por InstanceNumber (ordem axial)
-  slices = [pydicom.dcmread(f) for f in dicom_files]
-  slices = [s for s in slices if hasattr(s, 'InstanceNumber')]
-  slices.sort(key=lambda s: s.InstanceNumber)
+    # Ordenar por InstanceNumber (ordem axial)
+    slices = [pydicom.dcmread(f) for f in dicom_files]
+    slices = [s for s in slices if hasattr(s, 'InstanceNumber')]
+    slices.sort(key=lambda s: s.InstanceNumber)
+    volume = np.stack([s.pixel_array for s in slices])
+    return slices, volume
 
-  # Converter para volume 3D
-  volume = np.stack([s.pixel_array for s in slices])
 
-  # st.write("Volume 3D:", volume.shape)  # (profundidade, altura, largura)
+# ==========================
+# Segmentação Pulmonar (mesma do treino)
+# ==========================
+def segment_lung_mask(image_hu, fill_lung_structures=True):
+    """
+    Segmenta os pulmões de uma imagem de TC em HU.
+    """
+    binary_image = np.array(image_hu < -320, dtype=np.int8)
+    labels = measure.label(binary_image)
+    background_label = labels[0, 0]
+    binary_image[labels == background_label] = 0
 
-  return slices, volume
+    if fill_lung_structures:
+        binary_image = binary_fill_holes(binary_image)
 
-# @title Layout
+    binary_image = clear_border(binary_image)
+    labels = measure.label(binary_image)
+    regions = measure.regionprops(labels)
+    regions.sort(key=lambda x: x.area, reverse=True)
 
-# # Titulo da página
+    final_mask = np.zeros_like(binary_image, dtype=bool)
+    for region in regions[:2]:
+        final_mask[labels == region.label] = True
+
+    # Remove bordas para evitar artefatos
+    final_mask[:5, :] = False
+    final_mask[-5:, :] = False
+    final_mask[:, :5] = False
+    final_mask[:, -5:] = False
+
+    return final_mask
+
+
+def preprocess_image_from_ds(ds):
+    """
+    Pré-processamento da imagem DICOM para predição:
+    - Conversão para HU
+    - Segmentação do pulmão
+    - Normalização [0,1]
+    - Redimensionamento
+    """
+    # HU
+    image = ds.pixel_array.astype(np.int16)
+    intercept = ds.RescaleIntercept if 'RescaleIntercept' in ds else -1024
+    slope = ds.RescaleSlope if 'RescaleSlope' in ds else 1
+    image = slope * image + intercept
+
+    # Segmentação pulmonar
+    lung_mask = segment_lung_mask(image, fill_lung_structures=True)
+    image_segmented = image.copy()
+    image_segmented[~lung_mask] = np.min(image)
+
+    # Normalização [0,1]
+    image_segmented = (image_segmented - np.min(image_segmented)) / (np.max(image_segmented) - np.min(image_segmented))
+
+    # Redimensionamento
+    image_resized = cv2.resize(image_segmented, (IMG_SIZE, IMG_SIZE))
+
+    return image_resized
+
+
+def predict_single_dicom(dicom_path, model):
+    ds = pydicom.dcmread(dicom_path)
+    img_preprocessed = preprocess_image_from_ds(ds)
+    img_array = np.expand_dims(img_preprocessed, axis=(0, -1))
+    prob = model.predict(img_array, verbose=0)[0][0]
+    pred_class = "Câncer" if prob > 0.5 else "Saudável"
+    img_to_show = Image.fromarray((img_preprocessed * 255).astype(np.uint8))
+    return prob, pred_class, img_to_show
+
+
+# ==========================
+# Layout Streamlit
+# ==========================
 st.set_page_config(page_title='Trabalho de Graduação', page_icon='🥼', layout='wide')
 st.title('Classificação de Anomalias em TC de Tórax')
-st.info('Identificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artifical | Trabalho de Graduação referente ao curso de Engenharia Biomédica da Universidade Federal do ABC')
-#
-# Menu Lateral
+st.info('Identificação e localização de anomalias causadas por câncer de pulmão, em tomografias de tórax, utilizando inteligência artificial | Trabalho de Graduação referente ao curso de Engenharia Biomédica da UFABC')
+
 st.sidebar.header("Menu")
 st.sidebar.caption("Leitura de arquivos DICOM.")
-#
-# # Upload do arquivo
-uploaded_zip = st.file_uploader(label='Upload your DICOM file:', type="zip")
 
-# @title Processamento dos arquivos DICOM
+uploaded_zip = st.file_uploader(label='Upload seu arquivo .zip com DICOMs', type="zip")
 
-
-# Baixa o modelo se não existir
+# ==========================
+# Carrega modelo treinado
+# ==========================
 if not os.path.exists(MODEL_PATH):
     with st.spinner("Baixando o modelo..."):
         gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
 
-# Carrega o modelo treinado
-modelo = tf.keras.models.load_model('classifier.h5')
+modelo = tf.keras.models.load_model(MODEL_PATH)
 
+# ==========================
+# Processamento do ZIP
+# ==========================
 if uploaded_zip:
     temp_dir = "temp_upload"
 
-    # Limpar e criar diretório temporário
+    # Limpar diretório temporário
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
     os.makedirs(temp_dir)
 
-    # Salvar arquivo zip
+    # Salvar zip temporário
     zip_path = os.path.join(temp_dir, "uploaded.zip")
     with open(zip_path, "wb") as f:
         f.write(uploaded_zip.getbuffer())
 
-    # Extrair arquivos do zip
+    # Extrair
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(temp_dir)
 
-    # Filtros
-    if 'filtro' not in st.session_state:
-        st.session_state.filtro = "Todos"
-
-    # Chamando a função para obter os arquivos DICOM do arquivo zipado
     dicom_files = funcObterArquivoDicom(temp_dir)
-
-    # Ler e ordenar as fatias
     slices, volume = funcOrdenarFatias(dicom_files)
 
-    # Passo 2: botões para filtrar
+    # Filtro lateral
     if 'filtro' not in st.session_state:
         st.session_state.filtro = "Todos"
 
     col1, col2 = st.columns(2)
 
     with col1:
-      flex_filtro = st.container(border=True, gap="small", height=200)
+        flex_filtro = st.container(border=True, gap="small", height=200)
+        flex_filtro.subheader("Filtro", divider=True)
+        flex_botoes = flex_filtro.container(horizontal=True, horizontal_alignment="left")
 
-      flex_filtro.subheader("Filtro", divider=True)
+        if flex_botoes.button("Todos", key="btn_todos"):
+            st.session_state.filtro = "Todos"
+        if flex_botoes.button("Apenas Câncer", key="btn_cancer"):
+            st.session_state.filtro = "Apenas Câncer"
+        if flex_botoes.button("Apenas Saudável", key="btn_saudavel"):
+            st.session_state.filtro = "Apenas Saudável"
 
-      flex_botoes = flex_filtro.container(horizontal=True, horizontal_alignment="left")
+        flex_filtro.write(f"Filtro ativo: {st.session_state.filtro}")
 
-      if flex_botoes.button("Todos", key="btn_todos"):
-          st.session_state.filtro = "Todos"
-      if flex_botoes.button("Apenas Câncer", key="btn_cancer"):
-          st.session_state.filtro = "Apenas Câncer"
-      if flex_botoes.button("Apenas Saudável", key="btn_saudavel"):
-          st.session_state.filtro = "Apenas Saudável"
-
-      flex_filtro.write(f"Filtro ativo: {st.session_state.filtro}")
-
-
-    # Processando os dados
+    # Predição
+    resultados = []
     for dicom_path in dicom_files:
-        ds = pydicom.dcmread(dicom_path)
-        img = ds.pixel_array.astype(np.float32)
+        try:
+            prob, pred_class, img_to_show = predict_single_dicom(dicom_path, modelo)
+            resultados.append({
+                "img": img_to_show,
+                "pred_class": pred_class,
+                "pred_prob": prob,
+                "filename": os.path.basename(dicom_path)
+            })
+        except Exception as e:
+            st.error(f"Erro ao processar {os.path.basename(dicom_path)}: {e}")
 
-        img_pil = Image.fromarray(img)
-        img_resized = img_pil.resize((IMG_SIZE, IMG_SIZE))
-        img_to_show = img_resized.convert("L")
-
-        img_array = np.array(img_resized)
-        img_array = np.expand_dims(img_array, axis=-1)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
-
-        pred = modelo.predict(img_array)
-        pred_prob = float(pred[0][0])
-        pred_class = "Câncer" if pred_prob > 0.5 else "Saudável"
-
-        resultados.append({
-            "img": img_to_show,
-            "pred_class": pred_class,
-            "pred_prob": pred_prob,
-            "filename": os.path.basename(dicom_path)
-        })
-
+    # Contagem
     num_cancer = [r for r in resultados if r['pred_class'] == 'Câncer']
     num_saudavel = [r for r in resultados if r['pred_class'] == 'Saudável']
 
     with col2:
-      flex_dados = st.container(border=True, gap="small", height=200)
-        
-      flex_dados.subheader("Dados", divider=True)
-      flex_dados.write(f"Arquivos DICOM encontrados: {len(dicom_files)}")
-      flex_dados.write(f"Slices detectados com câncer: {len(num_cancer)}")
-      flex_dados.write(f"Slices detectados como saudável: {len(num_saudavel)}")
+        flex_dados = st.container(border=True, gap="small", height=200)
+        flex_dados.subheader("Dados", divider=True)
+        flex_dados.write(f"Arquivos DICOM encontrados: {len(dicom_files)}")
+        flex_dados.write(f"Slices detectados com câncer: {len(num_cancer)}")
+        flex_dados.write(f"Slices detectados como saudável: {len(num_saudavel)}")
 
-    # Exibir imagens filtradas lado a lado
-
-    filtrado = []
+    # Exibição dos resultados filtrados
     if st.session_state.filtro == "Todos":
         filtrado = resultados
     elif st.session_state.filtro == "Apenas Câncer":
@@ -184,7 +236,6 @@ if uploaded_zip:
         filtrado = num_saudavel
 
     st.subheader("Resultados")
-
     for i in range(0, len(filtrado), NUM_COLS):
         cols = st.columns(min(NUM_COLS, len(filtrado) - i))
         batch = filtrado[i:i+NUM_COLS]
