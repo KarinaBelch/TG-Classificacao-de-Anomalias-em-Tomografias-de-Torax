@@ -14,7 +14,6 @@ import cv2
 from skimage import measure
 from skimage.segmentation import clear_border
 from scipy.ndimage import binary_fill_holes
-import matplotlib.pyplot as plt
 import io
 
 # ==========================
@@ -91,14 +90,14 @@ def preprocess_image_from_ds(ds):
     return image_resized
 
 # ==========================
-# Predição com máscara verde
+# Predição com máscara verde diretamente em RGB
 # ==========================
 def predict_single_dicom(dicom_path, model):
     ds = pydicom.dcmread(dicom_path)
-    img_preprocessed = preprocess_image_from_ds(ds)
-    img_array = np.expand_dims(img_preprocessed, axis=(0, -1))
+    img_preprocessed = preprocess_image_from_ds(ds)  # [0,1]
 
     # Predição
+    img_array = np.expand_dims(img_preprocessed, axis=(0, -1))
     prob = model.predict(img_array, verbose=0)[0][0]
     pred_class = "Câncer" if prob > 0.5 else "Saudável"
 
@@ -106,16 +105,20 @@ def predict_single_dicom(dicom_path, model):
     lung_mask = segment_lung_mask(ds.pixel_array.astype(np.int16))
     lung_mask_resized = cv2.resize(lung_mask.astype(np.uint8), (IMG_SIZE, IMG_SIZE))
 
-    # Criar figura matplotlib
-    fig, ax = plt.subplots(figsize=(5,5))
-    ax.imshow(img_preprocessed, cmap='gray')
-    ax.imshow(lung_mask_resized, cmap='Greens', alpha=0.4)
-    ax.axis('off')
+    # Criar imagem RGB combinada
+    img_rgb = np.stack([img_preprocessed]*3, axis=-1)  # grayscale -> RGB
+    img_rgb = (img_rgb * 255).astype(np.uint8)
 
+    # Sobrepor máscara verde
+    green = np.array([0,255,0], dtype=np.uint8)
+    alpha = 0.4
+    img_rgb[lung_mask_resized>0] = ((1-alpha)*img_rgb[lung_mask_resized>0] + alpha*green).astype(np.uint8)
+
+    # Converter para Pillow e BytesIO
+    img_final = Image.fromarray(img_rgb)
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    img_final.save(buf, format='PNG')
     buf.seek(0)
-    plt.close(fig)
 
     return prob, pred_class, buf
 
