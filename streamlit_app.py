@@ -76,8 +76,8 @@ def segment_lung_mask(image_hu, fill_lung_structures=True):
 
 def preprocess_image_from_ds(ds):
     image = ds.pixel_array.astype(np.int16)
-    intercept = ds.RescaleIntercept if 'RescaleIntercept' in ds else -1024
-    slope = ds.RescaleSlope if 'RescaleSlope' in ds else 1
+    intercept = getattr(ds, 'RescaleIntercept', -1024)
+    slope = getattr(ds, 'RescaleSlope', 1)
     image = slope * image + intercept
 
     lung_mask = segment_lung_mask(image, fill_lung_structures=True)
@@ -94,36 +94,41 @@ def preprocess_image_from_ds(ds):
 # ==========================
 def predict_single_dicom(dicom_path, model):
     ds = pydicom.dcmread(dicom_path)
-    img_preprocessed = preprocess_image_from_ds(ds)  # [0,1]
 
-    # Predição
+    # --- Imagem original ---
+    image_orig = ds.pixel_array.astype(np.int16)
+    intercept = getattr(ds, 'RescaleIntercept', -1024)
+    slope = getattr(ds, 'RescaleSlope', 1)
+    image_orig = slope * image_orig + intercept
+
+    image_orig_norm = (image_orig - np.min(image_orig)) / (np.max(image_orig) - np.min(image_orig))
+    image_orig_resized = cv2.resize(image_orig_norm, (IMG_SIZE, IMG_SIZE))
+    img_original = Image.fromarray((image_orig_resized*255).astype(np.uint8)).convert("RGB")
+
+    # --- Pré-processamento para o modelo ---
+    img_preprocessed = preprocess_image_from_ds(ds)
     img_array = np.expand_dims(img_preprocessed, axis=(0, -1))
     prob = model.predict(img_array, verbose=0)[0][0]
     pred_class = "Câncer" if prob > 0.5 else "Saudável"
 
-    # Máscara segmentada
-    lung_mask = segment_lung_mask(ds.pixel_array.astype(np.int16))
+    # --- Máscara ---
+    lung_mask = segment_lung_mask(image_orig)
     lung_mask_resized = cv2.resize(lung_mask.astype(np.uint8), (IMG_SIZE, IMG_SIZE))
 
-    # Imagem original RGB
-    img_rgb = np.stack([img_preprocessed]*3, axis=-1)
-    img_rgb = (img_rgb * 255).astype(np.uint8)
-    img_original = Image.fromarray(img_rgb)
-
-    # Imagem com máscara verde
-    img_mask = img_rgb.copy()
+    # --- Criar imagem com máscara verde ---
+    img_mask = np.stack([image_orig_resized]*3, axis=-1)
+    img_mask = (img_mask*255).astype(np.uint8)
     green = np.array([0,255,0], dtype=np.uint8)
     alpha = 0.4
     img_mask[lung_mask_resized>0] = ((1-alpha)*img_mask[lung_mask_resized>0] + alpha*green).astype(np.uint8)
     img_mask = Image.fromarray(img_mask)
 
-    # Combinar lado a lado
+    # --- Combinar lado a lado ---
     combined_width = img_original.width + img_mask.width
     combined_img = Image.new('RGB', (combined_width, IMG_SIZE))
     combined_img.paste(img_original, (0,0))
     combined_img.paste(img_mask, (img_original.width,0))
 
-    # Salvar em BytesIO
     buf = io.BytesIO()
     combined_img.save(buf, format='PNG')
     buf.seek(0)
