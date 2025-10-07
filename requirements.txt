@@ -1,11 +1,9 @@
 streamlit
-joblib
-scikit-learn
 numpy
-pandas
 pydicom
-tensorflow
-matplotlib
-pillow
 gdown
-opencv-python
+tensorflow
+Pillow
+opencv-python-headless
+scikit-image
+scipy
