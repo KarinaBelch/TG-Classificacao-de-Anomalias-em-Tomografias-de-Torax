@@ -90,7 +90,7 @@ def preprocess_image_from_ds(ds):
     return image_resized
 
 # ==========================
-# Predição com máscara verde diretamente em RGB
+# Predição com visualização lado a lado
 # ==========================
 def predict_single_dicom(dicom_path, model):
     ds = pydicom.dcmread(dicom_path)
@@ -105,19 +105,27 @@ def predict_single_dicom(dicom_path, model):
     lung_mask = segment_lung_mask(ds.pixel_array.astype(np.int16))
     lung_mask_resized = cv2.resize(lung_mask.astype(np.uint8), (IMG_SIZE, IMG_SIZE))
 
-    # Criar imagem RGB combinada
-    img_rgb = np.stack([img_preprocessed]*3, axis=-1)  # grayscale -> RGB
+    # Imagem original RGB
+    img_rgb = np.stack([img_preprocessed]*3, axis=-1)
     img_rgb = (img_rgb * 255).astype(np.uint8)
+    img_original = Image.fromarray(img_rgb)
 
-    # Sobrepor máscara verde
+    # Imagem com máscara verde
+    img_mask = img_rgb.copy()
     green = np.array([0,255,0], dtype=np.uint8)
     alpha = 0.4
-    img_rgb[lung_mask_resized>0] = ((1-alpha)*img_rgb[lung_mask_resized>0] + alpha*green).astype(np.uint8)
+    img_mask[lung_mask_resized>0] = ((1-alpha)*img_mask[lung_mask_resized>0] + alpha*green).astype(np.uint8)
+    img_mask = Image.fromarray(img_mask)
 
-    # Converter para Pillow e BytesIO
-    img_final = Image.fromarray(img_rgb)
+    # Combinar lado a lado
+    combined_width = img_original.width + img_mask.width
+    combined_img = Image.new('RGB', (combined_width, IMG_SIZE))
+    combined_img.paste(img_original, (0,0))
+    combined_img.paste(img_mask, (img_original.width,0))
+
+    # Salvar em BytesIO
     buf = io.BytesIO()
-    img_final.save(buf, format='PNG')
+    combined_img.save(buf, format='PNG')
     buf.seek(0)
 
     return prob, pred_class, buf
