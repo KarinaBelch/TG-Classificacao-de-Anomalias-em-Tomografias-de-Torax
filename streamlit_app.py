@@ -15,9 +15,9 @@ import os
 import pydicom
 import gdown
 import zipfile
-import zipfile
 import shutil
-from tensorflow.keras.models import load_model
+import tensorflow as tf
+#from tensorflow.keras.models import load_model
 from PIL import Image
 
 # @title Parâmetros
@@ -85,7 +85,7 @@ if not os.path.exists(MODEL_PATH):
         gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
 
 # Carrega o modelo treinado
-modelo = load_model('classifier.h5')
+modelo = tf.keras.models.load_model('classifier.h5')
 
 if uploaded_zip:
     temp_dir = "temp_upload"
